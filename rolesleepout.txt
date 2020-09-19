@@ -1,0 +1,2 @@
+Marginal:
+    "x0|0|Bat|bat,-idea,-sleep,animate|bat,animate x1|0|Idea|-bat,idea,-sleep,-animate|idea x2|0|Sleep|-bat,-idea,sleep,-animate|sleep ; Agent|x2|x0" : 1

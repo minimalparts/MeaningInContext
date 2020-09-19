@@ -1,0 +1,21 @@
+Marginal:
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,-eaten,gills,-legs ; " : 0.159
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,-eaten,-legs ; " : 0.122
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,-eaten,gills ; " : 0.111
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,-eaten ; " : 0.099
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,gills,-legs ; " : 0.092
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,-legs ; " : 0.085
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home,gills ; " : 0.0845
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,lives_in_home ; " : 0.07
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,-eaten,gills,-legs ; " : 0.032
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,-eaten,gills ; " : 0.03
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,-eaten,-legs ; " : 0.0285
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,gills ; " : 0.019
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,gills,-legs ; " : 0.0175
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,-legs ; " : 0.017
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish,-eaten ; " : 0.016
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,-eaten,gills,-legs|pet,fish ; " : 0.0155
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,eaten,gills,-legs|pet,fish,lives_in_home,eaten,gills,-legs ; " : 0.0005
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,eaten,gills,-legs|pet,fish,lives_in_home,gills,-legs ; " : 0.0005
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,eaten,gills,-legs|pet,fish,lives_in_home,eaten ; " : 0.0005
+    "x0|Animals,Animals|Pet,Fish|pet,fish,lives_in_home,eaten,gills,-legs|pet,fish,lives_in_home,eaten,-legs ; " : 0.0005

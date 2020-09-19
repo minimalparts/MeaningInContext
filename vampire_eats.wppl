@@ -1,0 +1,581 @@
+// Katrin Erk, April 2020
+// experiments for the marrying-the-star paper
+//
+// "A vampire is eating":
+// explore extensions of the given scenario
+//
+// scenario: gothic
+// 
+
+
+
+//-------- utterance
+
+// "A vampire is eating"
+var utterance = [
+    [
+	[ "vampire"], [ "eat" ]
+    ],
+    [
+	[1, "Agent", 0],
+    ]
+]
+    
+//=================================
+// maximum number of discourse referents
+var max_referents = 6
+
+var conceptnames = ["Vampire", "Bat-animal", "Blood_orange", "Castle", "Eat"]
+var all_conceptindices = mapN(function(i) { return(i) }, conceptnames.length)
+
+var featurenames = ["vampire", "bat", "blood_orange", "castle", "eat",
+		    "animal_ish", "object", "edible", "building"]
+var all_featureindices = mapN(function(i) { return(i) }, featurenames.length)
+
+var rolenames = ["Agent", "Patient", "Location"]
+var all_roleindices = mapN(function(i) { return(i) }, rolenames.length)
+
+// scenarios: concept indices
+var scenarios = [
+    [0,1,2,3,4]
+]
+var all_scenario_indices = mapN(function(i) { return(i) }, scenarios.length)
+
+
+// concentration parameter for the Dirichlet:
+// how much should we prefer to stay with few scenarios
+var concentration_parameter = 0.5
+// parameter for the Dirichlet: a vector of length scenarios.length, consisting
+// entirely of the value concentration_parameter
+var dirichlet_alpha = ones([ scenarios.length, 1]).mul(concentration_parameter)
+
+
+
+//-------- probability of truth
+// features "vampire", "bat", "blood_orange", "castle", "eat",
+//		    "object", "edible", "building"
+var concept_p_truth = [
+    // Vampire
+    [
+	1.0, // vampire
+	0.1, // bat
+	0.0, //blood orange
+	0.0, // castle
+	0.0, // eat
+	1.0, // animal_ish
+	1.0, // object
+	0.0, //edible
+	0.0 // building
+    ],
+    // Bat-animal
+    [
+	0.1, // vampire
+	1.0, // bat
+	0.0, //blood orange
+	0.0, // castle
+	0.0, // eat
+	1.0, // animal_ish
+	1.0, // object
+	0.01, //edible
+	0.0 // building
+    ],
+    // Blood_orange
+    [
+	0.0, // vampire
+	0.0, // bat
+	1.0, //blood orange
+	0.0, // castle
+	0.0, // eat
+	0.0, // animal_ish
+	1.0, // object
+	0.95, //edible
+	0.0 // building
+    ],	
+    // Castle
+    [
+	0.0, // vampire
+	0.0, // bat
+	0.0, //blood orange
+	1.0, // castle
+	0.0, // eat
+	0.0, // animal_ish
+	1.0, // object
+	0.0, //edible
+	1.0 // building
+    ],
+    // Eat
+    [
+	0.0, // vampire
+	0.0, // bat
+	0.0, //blood orange
+	0.0, // castle
+	1.0, // eat
+	0.0, // animal_ish
+	0.0, // object
+	0.0, //edible
+	0.0 // building
+    ]	
+]
+    
+
+//-------- probability of salience
+var concept_p_salience = 
+[
+    // Vampire
+    [
+	1.0, // vampire
+	0.0, // bat
+	0.0, // blood orange
+	0.0, // castle
+	0.0, // eat
+	0.0, // animal_ish	
+	0.0, // object
+	0.0, //edible
+	0.0 // building
+    ],
+    // Bat-animal
+    [
+	0.0, // vampire
+	1.0, // bat
+	0.0, // blood orange
+	0.0, // castle
+	0.0, // eat
+	0.3, // animal_ish	
+	0.0, // object
+	0.0, //edible
+	0.0 // building
+    ],
+    // Blood_orange
+    [
+	0.0, // vampire
+	0.0, // bat
+	1.0, // blood orange
+	0.0, // castle
+	0.0, // eat
+	0.0, // animal_ish	
+	0.0, // object
+	0.6, //edible
+	0.0 // building
+    ],	
+    // Castle
+    [
+	0.0, // vampire
+	0.0, // bat
+	0.0, // blood orange
+	1.0, // castle
+	0.0, // eat
+	0.0, // animal_ish	
+	0.0, // object
+	0.0, //edible
+	0.2 // building
+    ],
+    // Eat
+    [
+	0.0, // vampire
+	0.0, // bat
+	0.0, // blood orange
+	0.0, // castle
+	1.0, // eat
+	0.0, // animal_ish	
+	0.0, // object
+	0.0, //edible
+	0.0 // building
+    ]	
+]
+
+
+//-------- role realization probabilities
+var concept_p_realize = [
+    // Vampire
+    [0.0, 0.0, 0.0],
+    //Bat-animal
+    [0.0, 0.0, 0.0],
+    // Blood_orange
+    [0.0, 0.0, 0.0],
+    // Castle
+    [0.0, 0.0, 0.0],
+    // Eat
+    [1.0, 0.8, 0.4]
+]
+
+//-------- feature checking probabilities
+var concept_role_p_check = [
+    // Vampire
+    [ ],
+    // Bat-animal
+    [ ],
+    // Blood orange
+    [ ],
+    // Castle
+    [ ],
+    // Eat
+    [
+	// Agent
+	// features "vampire", "bat", "blood_orange", "castle", "eat",
+	//	    "animal_ish", "object", "edible", "building"
+	[ 0.0, 0.0, 0.0, 0.0, 0.0,
+	  1.0, 0.1, 0.0, 0.0],
+	// Patient
+	[ 0.0, 0.0, 0.0, 0.0, 0.0,
+	  0.0, 0.1, 1.0, 0.0],
+	// Location
+	[ 0.0, 0.0, 0.0, 0.0, 0.0,
+	  0.0, 0.05, 0.0, 1.0],
+    ]
+]
+
+
+//================================
+// handling groups and roles
+//================================
+
+
+var make_group = function(groupindex, scenarioindices, conceptindices, featurevector, conditions) {
+    return( [ groupindex, scenarioindices, conceptindices, featurevector, conditions] )
+}
+
+
+var get_groupindex = function(group) {
+    return( group[0] )
+}
+
+var get_group_scenarioindices = function(group) {
+    return( group[1] )
+}
+
+var get_group_conceptindices = function(group) {
+    return( group[2] )
+}
+
+var get_group_featurevector = function(group) {
+    return( group[3] )
+}
+
+var get_group_conditions = function(group) {
+    return( group[4] )
+}
+
+
+var group_string = function(group) {
+    return( [
+	["x", get_groupindex(group)].join(""),
+	get_group_scenarioindices(group).join(","),
+	map(function(conceptindex) { return(conceptnames[conceptindex]) }, get_group_conceptindices(group)).join(","),
+	get_group_featurevector(group).join(","),
+	get_group_conditions(group).join(",")
+    ].join("|"))
+}
+
+
+var make_role = function(eventgroupindex, eventconceptindex, roleindex, fillergroupindex) {
+    return([eventgroupindex, eventconceptindex, roleindex, fillergroupindex])
+}
+
+var get_role_eventgroupindex = function(role) {
+    return(role[0])
+}
+
+var get_role_eventconceptindex = function(role) {
+    return(role[1])
+}
+
+var get_roleindex = function(role){
+    return(role[2])
+}
+
+var get_role_fillergroupindex = function(role) {
+    return(role[3])
+}
+
+var role_string = function(role) {
+    return([
+	rolenames[ get_roleindex(role)],
+	"|x",
+	get_role_eventgroupindex(role),
+	"|x",
+	get_role_fillergroupindex(role)
+    ].join(""))
+}
+
+//================================
+// generating the canonical output
+//================================
+
+
+var canonical_output = function(groups, roles) {
+    return( [
+	map(function(group) { return( group_string(group)) }, groups).join(" "),
+	map(function(role) { return( role_string(role)) }, roles).join(" ")
+    ].join(" ; "))
+}
+
+
+//====================================
+// situation description sampling
+//====================================
+
+// sample truth for each feature, return as string
+var sample_featurevector = function(conceptindex) {
+    return(mapN(function(featureindex) {
+	return( flip(concept_p_truth[conceptindex][featureindex] ) ?
+		featurenames[featureindex] :
+		["-", featurenames[featureindex]].join("") )
+    }, featurenames.length))
+}
+
+
+// for each feature, sample whether it is salient,
+// keep only the salient ones.
+var sample_salient_conditions = function(conceptindex, featurevector) {
+    
+    return( reduce( function(salience_and_feature, acc) {
+	var prob = salience_and_feature[0]
+	var feature = salience_and_feature[1]
+	
+	return( flip(prob) ? [feature].concat(acc) : acc)
+	
+    }, [ ], zip(concept_p_salience[conceptindex], featurevector)))
+}
+
+//---------group sampling
+
+// draw a whole group, given the distribution over scenarios
+// and given the group index
+var draw_group = function(theta, groupindex) {
+    
+    // draw a scenario index from a categorical distribution with parameter theta
+    var scindex = categorical({ps: theta, vs: all_scenario_indices})
+	
+    // draw a concept index from the scenario number scindex, giving equal probability to all concepts
+    // in the scenario
+    var conceptindex = categorical({vs: scenarios[ scindex ]})
+
+    // for draw a feature vector for the concept
+    var featurevector = sample_featurevector(conceptindex)
+
+    // for each feature: select whether it is salient,
+    // keep only salient ones
+    var conditions = sample_salient_conditions(conceptindex, featurevector)
+    
+    return( make_group(groupindex, [ scindex ], [ conceptindex ], featurevector, conditions))    
+}
+
+//---------role realization
+
+// for a given group, find the single concept (if any)
+// that has roles
+var rolebearing_concept_ifany = function(group) {
+    var conceptindices_with_roles = filter(function(conceptindex) {
+	return(sum(concept_p_realize[conceptindex]) > 0.0)
+    }, get_group_conceptindices(group))
+
+    // more than one? we are excluding that for now
+    if (conceptindices_with_roles.length >=2) {
+	display(["Problem: concept group with more than one role bearer", concepts])
+    }
+    condition(conceptindices_with_roles.length < 2)
+
+    // exactly one? then return that. else return the very first concept index.
+    return ((conceptindices_with_roles.length == 0) ? get_group_conceptindices(group)[0] :
+	    conceptindices_with_roles[0])
+}
+
+// given a list of groups,
+// sample, for each one, which roles it will realize
+// return a list of role tuples with the filler set to -1
+var sample_which_groups_realize_which_roles = function(groups, roletuples_already_made) {
+    // iterate over groups
+    return( reduce(function(group, groupacc) {
+	// determine the single concept index (if any)
+	// within this group that realizes roles
+	var eventconceptindex = rolebearing_concept_ifany(group)
+	var eventgroupindex = get_groupindex(group)
+	
+	// iterate over roles
+	return( reduce(function(roleindex, roleacc) {
+	    
+	    // for each role, check whether it has already been filled.
+	    // if not, sample whether this concept will realize this role
+	    return( any(function(existing_roletuple) {
+		return (get_role_eventgroupindex(existing_roletuple) == eventgroupindex  &
+			get_roleindex(existing_roletuple) == roleindex)
+	    }, roletuples_already_made) ?
+		    roleacc :
+		    (flip(concept_p_realize[eventconceptindex][roleindex]) ?
+		     [ make_role(eventgroupindex, eventconceptindex, roleindex, -1) ].concat(roleacc) :
+		     roleacc))
+		  
+	}, groupacc, all_roleindices))
+    }, [ ], groups))
+}
+
+//---------role filling
+
+// sample a selectional preference vector
+// in the form of a feature list.
+// we assume that all sampled features are checked to be true,
+// rather than false, in the filler candidate features.
+//
+var sample_selpref_vector = function(roletuple) {
+    var conceptindex = get_role_eventconceptindex(roletuple)
+    var roleindex = get_roleindex(roletuple)
+
+    return(reduce(function(featureindex, acc) {
+	// sample whether to fill this role.
+	// if yes, add the feature to the list
+	return( flip(concept_role_p_check[conceptindex][roleindex][featureindex]) ?
+		[ featurenames[featureindex] ].concat(acc) :
+		acc)
+	    
+    }, [ ], all_featureindices))
+}
+
+// filter the given list of groups to find those
+// that match the given selectional constraint vector.
+// A filler candidate group matches the selectional constraint vector
+// if its feature vector contains at least one of the features also set
+// in the selectional constraint vector.
+var find_filler_candidates = function(selpref_vector, groups) {
+    var filler_candidate_groups = filter(function(group) {
+	// check if the feature vector of this group
+	// contains any of the features in the selectional preference vector
+	return(any(function(selpref_feature) {
+	    return(get_group_featurevector(group).includes(selpref_feature))
+	}, selpref_vector))
+    }, groups)
+
+    return(map(function(group) {
+	return(get_groupindex(group))
+    }, filler_candidate_groups))
+}
+
+
+// make sure that each argument receives at most one semantic role for a given predicate
+var thetacriterion = function(roles) {
+    reduce(function(role, acc) {
+	// make sure there is no role in acc with the same event index and filler index
+	map( function(otherrole) {
+	    condition(get_role_eventgroupindex(role) != get_role_eventgroupindex(otherrole) ||
+		      get_role_fillergroupindex(role) != get_role_fillergroupindex(otherrole))
+	}, acc)
+	return [role].concat(acc)
+    }, [], roles)
+}
+
+//================================
+// model
+//================================
+var model = function() {
+    // draw a distribution over scenarios
+    var theta = dirichlet(dirichlet_alpha)
+
+    var utterance_groups = utterance[0]
+    var utterance_roles = utterance[1]
+
+    // for the observed referents:
+    // make sure we observe them,
+    // and record the rest of their features
+    var groups1 = mapIndexed(function(groupindex, utterance_group) {
+	var thisgroup = draw_group(theta, groupindex)
+	var conditions = get_group_conditions(thisgroup)
+	
+	// check that all conditions in the utterance are
+	// also in what we just sampled
+	map(function(utterance_condition) {
+	    condition(conditions.includes(utterance_condition))
+	}, utterance_group)
+
+	return(thisgroup)
+    }, utterance_groups)
+
+    // for the observed roles:
+    // make sure their selectional constraints are fulfilled
+    var roles1 = map(function(utterance_role) {
+	var eventgroupindex = utterance_role[0]
+	var fillergroupindex = utterance_role[2]
+	var rolelabel = utterance_role[1]
+
+	if(eventgroupindex > groups1.length) {
+	    display(["Event group index beyond utterance length", eventgroupindex])
+	    condition(false)
+	}
+	if(fillergroupindex > groups1.length) {
+	    display(["Filler group index beyond utterance length", fillergroupindex])
+	    condition(false)
+	}
+
+	// figure out the role index
+	var roleindex = find(function(index) { rolenames[index] == rolelabel}, all_roleindices)
+	// determine the event concept
+	var eventconceptindex = rolebearing_concept_ifany(groups1[eventgroupindex])
+	
+	// check that this concept can realize this role.
+	condition(concept_p_realize[eventconceptindex][roleindex] > 0)
+	
+	// make the role tuple, and sample a selectional preference vector
+	var roletuple = make_role(eventgroupindex, eventconceptindex, roleindex, fillergroupindex)
+	var selpref_vector = sample_selpref_vector(roletuple)
+
+	// make sure the selectional preference matches
+	condition(any(function(selpref_feature) {
+	    return(get_group_featurevector(groups1[fillergroupindex]).includes(selpref_feature))
+	}, selpref_vector))
+
+	// all good
+	return(roletuple)
+    }, utterance_roles)
+
+    // do we have additional groups to make?
+    var m1rest = (max_referents > utterance.length) ?
+	randomInteger(max_referents - utterance.length) + 1:
+	0
+    
+    // m1rest times: draw a group 
+    var groups2 = mapN( function(index) {
+	var groupindex = utterance.length + index
+	return( draw_group(theta, groupindex))
+    }, m1rest)
+
+    var groups = groups1.concat(groups2)
+
+    // pairs of a group and a role index such that we sampled that the group will realize the role
+    var unfilled_roles = sample_which_groups_realize_which_roles(groups, roles1)
+
+    // role tuples
+    var roles2 = map(function(roletuple) {
+	
+	// sample a selectional constraint vector
+	var selpref_vector = sample_selpref_vector(roletuple)
+
+	// find all fillers that match (group indices)
+	var filler_candidates = find_filler_candidates(selpref_vector, groups)
+	
+	// we have to have at least one candidate at this point
+	// because we have previously sampled that this role should be filled
+	condition(filler_candidates.length > 0)
+
+	// sample a random member of the filler candidate set
+	var fillergroup_index = categorical({vs: filler_candidates})
+
+	// and make a role tuple
+	return(make_role(get_role_eventgroupindex(roletuple),
+			 get_role_eventconceptindex(roletuple),
+			 get_roleindex(roletuple),
+			 fillergroup_index))
+	
+    }, unfilled_roles)
+
+    var roles = roles1.concat(roles2)
+
+    // make sure that each entity only fills a single semantic role for a given event
+    thetacriterion(roles)
+    
+    // see output in terms of scenarios and concepts
+    return canonical_output(groups, roles)
+}
+
+
+var dist = Infer({method: 'rejection', samples: 2000, model:model});
+
+
+dist

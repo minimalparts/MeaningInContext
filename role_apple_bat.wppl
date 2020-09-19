@@ -1,0 +1,332 @@
+// Katrin Erk, May 2020
+// experiments for the marrying-the-star paper
+//
+// We have a situation description with eating event, a bat-stick, and an apple.
+// we say that the Patient is mandatory, and check what will be the filler. 
+
+var featurenames = [ "apple", "bat", "eat", "edible", "object"]
+var all_featureindices = mapN(function(i) { return(i) }, featurenames.length)
+
+
+var conceptnames = ["Apple", "Bat-stick", "Eat"]
+
+var rolenames = ["Patient"]
+var all_roleindices = mapN(function(i) { return(i) }, rolenames.length)
+
+//-------- probability of truth
+var concept_p_truth = [
+    // Apple
+    [
+	1.0, 0.0, 0.0, 0.98, 1.0
+    ],
+    // Bat
+    [
+	0.0, 1.0, 0.0, 0.01, 1.0
+    ],
+    // Eat
+    [
+	0.0, 0.0, 1.0, 0.0, 0.0
+    ]
+]
+    
+
+//-------- probability of salience
+var concept_p_salience = [
+    // Apple
+    [
+	1.0, 0.0, 0.0, 0.2, 0.0
+    ],
+    // Bat
+    [
+	0.0, 1.0, 0.0, 0.0, 0.0
+    ],
+    // Eat
+    [
+	0.0, 0.0, 1.0, 0.0, 0.0
+    ]
+]
+
+//-------- role realization probabilities
+var concept_p_realize = [
+    // Apple
+    [ 0.0],
+    // Bat
+    [ 0.0],
+    // Eat
+    [ 1.0]
+]
+
+//-------- feature checking probabilities
+var concept_role_p_check = [
+    // Apple
+    [ ],
+    // Bat
+    [ ],
+    // Eat
+    [
+	// Agent
+	[ 0.0, 0.0, 0.0, 1.0, 0.05]
+    ]
+]
+
+
+
+
+//====================================
+// handling groups and roles
+//====================================
+
+var make_group = function(groupindex, scenarioindices, conceptindices, featurevector, conditions) {
+    return( [ groupindex, scenarioindices, conceptindices, featurevector, conditions] )
+}
+
+var get_groupindex = function(group) {
+    return( group[0] )
+}
+
+var get_group_scenarioindices = function(group) {
+    return( group[1] )
+}
+
+var get_group_conceptindices = function(group) {
+    return( group[2] )
+}
+
+var get_group_featurevector = function(group) {
+    return( group[3] )
+}
+
+var get_group_conditions = function(group) {
+    return( group[4] )
+}
+
+var group_string = function(group) {
+    return( [
+	["x", get_groupindex(group)].join(""),
+	get_group_scenarioindices(group).join(","),
+	map(function(conceptindex) { return(conceptnames[conceptindex]) }, get_group_conceptindices(group)).join(","),
+	get_group_featurevector(group).join(","),
+	get_group_conditions(group).join(",")
+    ].join("|"))
+}
+
+var make_role = function(eventgroupindex, eventconceptindex, roleindex, fillergroupindex) {
+    return([eventgroupindex, eventconceptindex, roleindex, fillergroupindex])
+}
+
+var get_role_eventgroupindex = function(role) {
+    return(role[0])
+}
+
+var get_role_eventconceptindex = function(role) {
+    return(role[1])
+}
+
+var get_roleindex = function(role){
+    return(role[2])
+}
+
+var get_role_fillergroupindex = function(role) {
+    return(role[3])
+}
+
+var role_string = function(role) {
+    return([
+	rolenames[ get_roleindex(role)],
+	"|x",
+	get_role_eventgroupindex(role),
+	"|x",
+	get_role_fillergroupindex(role)
+    ].join(""))
+}
+
+//====================================
+// conceptual representation sampling
+//====================================
+
+//---------truth
+// sample truth for each feature, return as string
+var sample_featurevector = function(conceptindex) {
+    return(mapN(function(featureindex) {
+	return( flip(concept_p_truth[conceptindex][featureindex] ) ?
+		featurenames[featureindex] :
+		["-", featurenames[featureindex]].join("") )
+    }, featurenames.length))
+}
+
+
+//---------salience
+// for each feature, sample whether it is salient,
+// keep only the salient ones.
+var sample_salient_conditions = function(conceptindex, featurevector) {
+    
+    return( reduce( function(salience_and_feature, acc) {
+	var prob = salience_and_feature[0]
+	var feature = salience_and_feature[1]
+	
+	return( flip(prob) ? [feature].concat(acc) : acc)
+	
+    }, [ ], zip(concept_p_salience[conceptindex], featurevector)))
+}
+
+//---------role realization
+
+// for a given group, find the single concept (if any)
+// that has roles
+var rolebearing_concept_ifany = function(group) {
+    var conceptindices_with_roles = filter(function(conceptindex) {
+	return(sum(concept_p_realize[conceptindex]) > 0.0)
+    }, get_group_conceptindices(group))
+
+    // more than one? we are excluding that for now
+    if (conceptindices_with_roles.length >=2) {
+	display(["Problem: concept group with more than one role bearer", concepts])
+    }
+    condition(conceptindices_with_roles.length < 2)
+
+    // exactly one? then return that. else return the very first concept index.
+    return ((conceptindices_with_roles.length == 0) ? get_group_conceptindices(group)[0] :
+	    conceptindices_with_roles[0])
+}
+
+// given a list of groups,
+// sample, for each one, which roles it will realize
+// return a list of role tuples with the filler set to -1
+var sample_which_groups_realize_which_roles = function(groups) {
+    // iterate over groups
+    return( reduce(function(group, groupacc) {
+	// determine the single concept index (if any)
+	// within this group that realizes roles
+	var eventconceptindex = rolebearing_concept_ifany(group)
+	var eventgroupindex = get_groupindex(group)
+	
+	// iterate over roles
+	return( reduce(function(roleindex, roleacc) {
+	    // for each role, sample whether this concept will realize this role
+	    return(flip(concept_p_realize[eventconceptindex][roleindex]) ?
+		   [ make_role(eventgroupindex, eventconceptindex, roleindex, -1) ].concat(roleacc) :
+		   roleacc)
+	}, groupacc, all_roleindices))
+    }, [ ], groups))
+}
+
+//---------role filling
+
+// sample a selectional preference vector
+// in the form of a feature list.
+// we assume that all sampled features are checked to be true,
+// rather than false, in the filler candidate features.
+//
+var sample_selpref_vector = function(roletuple) {
+    var conceptindex = get_role_eventconceptindex(roletuple)
+    var roleindex = get_roleindex(roletuple)
+
+    return(reduce(function(featureindex, acc) {
+	// sample whether to fill this role.
+	// if yes, add the feature to the list
+	return( flip(concept_role_p_check[conceptindex][roleindex][featureindex]) ?
+		[ featurenames[featureindex] ].concat(acc) :
+		acc)
+	    
+    }, [ ], all_featureindices))
+}
+
+// filter the given list of groups to find those
+// that match the given selectional constraint vector.
+// A filler candidate group matches the selectional constraint vector
+// if its feature vector contains at least one of the features also set
+// in the selectional constraint vector.
+var find_filler_candidates = function(selpref_vector, groups) {
+    var filler_candidate_groups = filter(function(group) {
+	// check if the feature vector of this group
+	// contains any of the features in the selectional preference vector
+	return(any(function(selpref_feature) {
+	    return(get_group_featurevector(group).includes(selpref_feature))
+	}, selpref_vector))
+    }, groups)
+
+    return(map(function(group) {
+	return(get_groupindex(group))
+    }, filler_candidate_groups))
+}
+
+//================================
+// generating the canonical version of a graph among equivalents
+//================================
+
+var canonical_output = function(groups, roles) {
+    return( [
+	map(function(group) { return( group_string(group)) }, groups).join(" "),
+	map(function(role) { return( role_string(role)) }, roles).join(" ")
+    ].join(" ; "))
+}
+
+
+//====================================
+// model
+//====================================
+
+var model = function() {
+    // concept indices: a bat, an idea, and a sleeping event
+    var conceptindices = [0,1,2]
+
+    // for each group: sample a feature vector and conditions
+
+    var groups = mapIndexed(function(groupindex, conceptindex) {
+	
+	// for each feature, select whether it is true.
+	var featurevector = sample_featurevector(conceptindex)
+
+	// for each feature: select whether it is salient,
+	// keep only salient ones
+	var conditions = sample_salient_conditions(conceptindex, featurevector)
+
+	return( make_group(groupindex, [0], [ conceptindex ], featurevector, conditions))
+    }, conceptindices)
+
+    // test display
+    // display("groups")
+    // map(function(group) {
+    // 	display([get_groupindex(group),
+    // 		 get_group_conceptindices(group),
+    // 		 get_group_featurevector(group),
+    // 		 get_group_conditions(group)])
+    // }, groups)
+
+    // pairs of a group and a role index such that we sampled that the group will realize the role
+    var unfilled_roles = sample_which_groups_realize_which_roles(groups)
+    // display(["unfilled roles", unfilled_roles])
+
+    // role tuples
+    var roles = map(function(roletuple) {
+	
+	// sample a selectional constraint vector
+	var selpref_vector = sample_selpref_vector(roletuple)
+	// display(["selpref", rolenames[get_roleindex(roletuple)], selpref_vector])
+
+	// find all fillers that match (group indices)
+	var filler_candidates = find_filler_candidates(selpref_vector, groups)
+	// display(["filler candidates", filler_candidates])
+	
+	// we have to have at least one candidate at this point
+	// because we have previously sampled that this role should be filled
+	condition(filler_candidates.length > 0)
+
+	// sample a random member of the filler candidate set
+	var fillergroup_index = categorical({vs: filler_candidates})
+
+	// and make a role tuple
+	return(make_role(get_role_eventgroupindex(roletuple),
+			 get_role_eventconceptindex(roletuple),
+			 get_roleindex(roletuple),
+			 fillergroup_index))
+	
+    }, unfilled_roles)
+    
+    // make canonical output
+    return ( canonical_output(groups, roles) )
+}
+
+var dist = Infer({method: 'rejection', samples: 2000, model:model});
+
+dist
