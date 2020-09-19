@@ -1,0 +1,241 @@
+// Katrin Erk, May 2020
+// experiments for the marrying-the-star paper
+//
+// we have  two concepts, "pet" and "fish"
+// we always combine the two.
+// we use the feature from Hampton 91.
+// We don't have explicit truth or salience probabilities, so we approximate them
+// from Hampton's comments
+
+// Hampton says:
+// Pet: habitat: domestic. edibility: not eaten. breathing: lungs. limbs: four legs.
+// fish: habitat: sea lake, river. edibility: often eaten. breathing: with gills. limbs: fins.
+
+
+var featurenames = [
+    "pet", "fish", "lives_in_home", "eaten", "gills", "legs"
+]
+
+var conceptnames = ["Pet", "Fish"]
+
+var scenarionames = ["Animals"]
+
+//-------- probability of truth
+var concept_p_truth = [
+    // Pet
+    [
+	1.0, 0.1, 1.0, 0.001, 0.1, 0.9
+    ],
+    // Fish
+    [
+	0.1, 1.0, 0.1, 0.9, 1.0, 0.0
+    ]
+]
+    
+
+//-------- probability of salience
+var concept_p_salience = [
+    // Pet
+    [
+	1.0, 0.0, 0.8, 0.2, 0.1, 0.1
+    ],
+    // Fish
+    [
+	0.01, 1.0, 0.1, 0.5, 0.5, 0.5
+    ]
+]
+
+//-------- probability of importance/voting:
+// 1 for features with probability almost 0 or almost 1,
+// otherwise same as salience
+
+
+var voting_importance_threshold = 0.001
+
+var concept_p_voting = mapN(function(conceptindex) {
+    return( mapN(function(featureindex) {
+	return ((concept_p_truth[conceptindex][featureindex] <= voting_importance_threshold) ? 1.0 :
+		((concept_p_truth[conceptindex][featureindex] >= 1.0- voting_importance_threshold) ? 1.0 :
+		 concept_p_salience[conceptindex][featureindex]))
+    }, featurenames.length))
+}, conceptnames.length)
+
+
+
+//================================
+// generating the canonical output: same as in the versions with groups and roles
+//================================
+
+
+var make_group = function(groupindex, scenarioindices, conceptindices, featurevector, conditions) {
+    return( [ groupindex, scenarioindices, conceptindices, featurevector, conditions] )
+}
+
+
+var get_groupindex = function(group) {
+    return( group[0] )
+}
+
+var get_group_scenarioindices = function(group) {
+    return( group[1] )
+}
+
+var get_group_conceptindices = function(group) {
+    return( group[2] )
+}
+
+var get_group_featurevector = function(group) {
+    return( group[3] )
+}
+
+var get_group_conditions = function(group) {
+    return( group[4] )
+}
+
+
+var group_string = function(group) {
+    return( [
+	["x", get_groupindex(group)].join(""),
+	map(function(ix) { return(scenarionames[ix]) }, get_group_scenarioindices(group)).join(","),
+	map(function(ix) { return(conceptnames[ix]) }, get_group_conceptindices(group)).join(","),
+	get_group_featurevector(group).join(","),
+	get_group_conditions(group).join(",")
+    ].join("|"))
+}
+
+var canonical_output = function(groups, roles) {
+    return( [
+	map(function(group) { return( group_string(group)) }, groups).join(" "),
+	map(function(role) { return( role_string(role)) }, roles).join(" ")
+    ].join(" ; "))
+}
+
+
+
+
+
+//====================================
+// feature vector sampling
+//====================================
+
+
+//----------Voting
+
+// given a feature and an array of concept indices,
+// sample which of the concepts want to vote and which want to abstain.
+// constraint: there has to be at least one voter
+// encapsulate the rejection sampling that
+// runs until a non-empty voting vector is found,
+// so it does not affect the overall probability of a sample
+// returns the list of voters
+var sample_votingvec = function(featureindex, conceptindices) {
+    return( conceptindices.length == 1 ?
+	    conceptindices :
+	    sample(Infer({method: "rejection", samples:1}, function() {
+		// for each concept: select whether it wants to vote
+		var voting_conceptindices = filter(function(conceptindex) {
+		    return(flip(concept_p_voting[conceptindex][featureindex]))
+		}, conceptindices)
+		
+		// we must have at least one voter feature
+		condition(voting_conceptindices.length > 0)
+		
+		return voting_conceptindices
+	    }))
+	  )
+}
+
+//----------Truth
+
+
+// sample truth for one concept, one feature, return as true/false
+var sample_truth = function(conceptindex, featureindex) {
+    return( flip(concept_p_truth[conceptindex][featureindex]))
+}
+
+var make_feature = function(featureindex, truthvalue) {
+    return( truthvalue? featurenames[featureindex] : ["-", featurenames[featureindex]].join(""))
+}
+
+//----------Salience
+
+// sample joint salience from a given set of concept indices
+var sample_joint_salience = function(conceptindices, featureindex) {
+    return( any(function(conceptindex) {
+	return(flip(concept_p_salience[conceptindex][featureindex]))
+    }, conceptindices))
+}
+
+// for each feature, sample whether it is salient,
+// keep only the salient ones.
+var sample_salient_conditions = function(conceptindices, featurevector) {
+    
+    return( reduce( function(featureindex, acc) {
+	var feature = featurevector[featureindex]
+	
+	return( sample_joint_salience(conceptindices, featureindex) ? [feature].concat(acc) : acc)
+	
+    }, [ ], mapN(function(i) { return(i)}, featurenames.length)))
+}
+	   
+
+
+//====================================
+// model
+//====================================
+
+
+var model = function() {
+    // single group only
+    var groupindex = 0
+    
+    //----option 1: output for "pet" only
+    // var scindices = [0]
+    // var conceptindices = [ 0 ]
+
+    //----option 2: output for "fish" only
+    // var scindices = [0]
+    // var conceptindices = [ 1 ]
+    
+    
+    //-----option 3: output for "pet fish"
+    var scindices = [0,0 ]
+    var conceptindices = [0, 1]
+
+    // for each feature: determine voters,
+    // make a joint probability-of-truth value for the voters,
+    // sample a feature value
+    var featurevector = mapN(function(featureindex) {
+	// which concepts want to vote?
+	var voting_conceptindices = sample_votingvec(featureindex, conceptindices)
+
+	// determine each voting concept's vote on this feature
+	var truth_vec = map(function(conceptindex) {
+	    sample_truth(conceptindex, featureindex)
+	}, voting_conceptindices)
+
+
+	// all voters need to be in agreement: all true, or all false
+	condition( all(function(e) { return(e) }, truth_vec) ||
+		   all(function(e) { return(!e) }, truth_vec))
+
+	// okay, all in agreement. construct the feature. we
+	// pass along the first value of the truth vector, which is the same
+	// as all values of the truth vector
+	return (make_feature(featureindex, truth_vec[0]))
+    }, featurenames.length)
+
+
+    // sample which of these features will be made into conditions
+    var conditions = sample_salient_conditions(conceptindices, featurevector)
+
+    var groups = [ make_group(groupindex, scindices , conceptindices, featurevector, conditions) ]
+
+    return canonical_output(groups, [ ])
+}
+
+
+var dist = Infer({method: 'rejection', samples: 2000, model:model});
+
+dist
+

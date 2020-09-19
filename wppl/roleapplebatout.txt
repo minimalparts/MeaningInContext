@@ -1,0 +1,14 @@
+Marginal:
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.786
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple,edible x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.1755
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.0195
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple,edible x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.007
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.0045
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.002
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple,edible x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.0015
+    "x0|0|Apple|apple,-bat,-eat,-edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.001
+    "x0|0|Apple|apple,-bat,-eat,-edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.001
+    "x0|0|Apple|apple,-bat,-eat,-edible,object|apple,-edible x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.0005
+    "x0|0|Apple|apple,-bat,-eat,-edible,object|apple x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x1" : 0.0005
+    "x0|0|Apple|apple,-bat,-eat,edible,object|apple,edible x1|0|Bat-stick|-apple,bat,-eat,edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.0005
+    "x0|0|Apple|apple,-bat,-eat,-edible,object|apple,-edible x1|0|Bat-stick|-apple,bat,-eat,-edible,object|bat x2|0|Eat|-apple,-bat,eat,-edible,-object|eat ; Patient|x2|x0" : 0.0005
