@@ -1,5 +1,0 @@
-Marginal:
-    "x0|0|Astronomer|astronomer,-marry,-star,person,object|astronomer x1|1|Marry|-astronomer,marry,-star,-person,-object|marry x2|1|Star-person|-astronomer,-marry,star,person,object|star ; Agent|x1|x0 Patient|x1|x2" : 0.3685
-    "x0|0|Astronomer|astronomer,-marry,-star,person,object|astronomer x1|0|Marry|-astronomer,marry,-star,-person,-object|marry x2|0|Star-sun|-astronomer,-marry,star,-person,object|star ; Agent|x1|x0 Patient|x1|x2" : 0.359
-    "x0|0|Astronomer|astronomer,-marry,-star,person,object|astronomer x1|0|Marry|-astronomer,marry,-star,-person,-object|marry x2|1|Star-person|-astronomer,-marry,star,person,object|star ; Agent|x1|x0 Patient|x1|x2" : 0.2485
-    "x0|0|Astronomer|astronomer,-marry,-star,person,object|astronomer x1|1|Marry|-astronomer,marry,-star,-person,-object|marry x2|0|Star-sun|-astronomer,-marry,star,-person,object|star ; Agent|x1|x0 Patient|x1|x2" : 0.024
